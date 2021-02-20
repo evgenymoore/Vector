@@ -233,7 +233,7 @@ void EXTI4_IRQHandler(void)
     TIM_Config(&htim10, (5.05 * 1000) - 1);
   else {
     TIM_Reset(&htim10);
-    if ((TIM10->CNT >= (1 * 1000)) && (TIM10->CNT < (5 * 1000)) {
+    if ((TIM10->CNT >= (1 * 1000)) && (TIM10->CNT < (5 * 1000))) {
       Alarm.remote = true; 
       Alarm.fault = false;
       GPIOE->ODR &= ~RELAY_Pin;
