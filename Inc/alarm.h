@@ -14,10 +14,11 @@ typedef struct
 {
   uint16_t counter;                                                             //счётчик пересечений
   bool cross;                                                                   //флаг перехода мгновенного значения АЦП за допустимую границу
-  bool reset;
-  bool remote;
-  bool fault;
-  bool delay;
+  enum mode { reset, remote, fault, delay };
+  //bool reset;
+  //bool remote;
+  //bool fault;
+  //bool delay;
 } alarm;
 
  /* объявление структуры */                                                        
