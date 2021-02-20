@@ -5,7 +5,7 @@ MODE DISTANCE;
 MODE Distance_Mode(GPIO_TypeDef* GPIOx)
 {
   MODE distance;
-  switch ((~GPIOx->IDR & 0xF000) >> 12)
+  switch ((~GPIOx->IDR & 0x0F00) >> 8)
   {
     case (0x1) : distance = MODE_1;
       break;
@@ -21,7 +21,7 @@ MODE Distance_Mode(GPIO_TypeDef* GPIOx)
 uint16_t Sense_Mode(GPIO_TypeDef* GPIOx)
 {
   uint16_t factor;
-  switch ((~GPIOx->IDR & 0x0F00) >> 8)
+  switch ((~GPIOx->IDR & 0xF000) >> 12)
   {
     case (0x1) : factor = 1200;
       break;
