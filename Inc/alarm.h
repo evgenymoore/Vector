@@ -14,11 +14,7 @@ typedef struct
 {
   uint16_t counter;                                                             //счётчик пересечений
   bool cross;                                                                   //флаг перехода мгновенного значения АЦП за допустимую границу
-  //enum { reset, remote, fault, delay } mode;
-  bool reset;
-  bool remote;
-  bool fault;
-  bool delay;
+  enum { reset, setup, remote, fault, delay } state;
 } alarm;
 
  /* объявление структуры */                                                        
@@ -26,10 +22,10 @@ extern alarm Alarm;
 
                                 /* объявления функций */
 void Alarm_Reset(alarm* alarm);                                                 //сброс тревоги 
-bool Alarm_Check(uint16_t counter);
-void Alarm_Cross(converter* conv, alarm* alarm);                                //сброс флага пересечений                           
-void Alarm_Update(converter* conv, alarm* alarm);                               //увеличение счетчика тревоги
-void Alarm_Launch(uint16_t counter, bool reset);                                //запуск тревоги
+void Alarm_Check(alarm* alarm);
+void Alarm_Cross(converter* analog, alarm* alarm);                              //сброс флага пересечений                           
+void Alarm_Update(converter* analog, alarm* alarm);                             //увеличение счетчика тревоги
+void Alarm_Launch(uint16_t counter);                                            //запуск тревоги
 
 
 #endif /* __ALARM_H */
