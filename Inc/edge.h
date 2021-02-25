@@ -7,15 +7,12 @@
 
 #include "analog.h"
 
-#define LEVEL_MODE              5000                                            //частота расчёта порога (половина буффера АЦП)
-
 typedef struct
 {
   uint32_t summ;
   uint16_t value;
   uint16_t factor;
 } average;
-
                                 /* объявления структур */ 
 extern average Average;
 

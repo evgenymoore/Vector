@@ -1,5 +1,7 @@
 #include "loop.h"
 
+uint16_t high, low;
+
 int loop(void)
 {
   Constructor_Analog(&Analog);
@@ -24,6 +26,9 @@ int loop(void)
   HAL_TIM_Base_Start_IT(&htim5);
   
   while(1) {
+    high = ADC1->HTR;
+    low = ADC1->LTR;
+    Send_Signal(Analog.buffer[Analog.index], high, low, uart_buffer);
     DISTANCE = Distance(GPIOE);
   }
 }

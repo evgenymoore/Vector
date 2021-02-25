@@ -2,10 +2,6 @@
 
 alarm Alarm;
 
-uint16_t Alarm_Reset(void) {
-  return 0;
-}
-
 void Alarm_Check(alarm* alarm) {  
   (alarm->counter == ALARM_MODE) ? (alarm->state = ready) : 
                                    (alarm->state = reset) ; 
@@ -34,10 +30,10 @@ void Alarm_Launch(uint16_t counter)
   switch(counter) 
   {
     case 1 : TIM_Reset(&htim11);
-             TIM_Config(&htim10, (5 * 1000) - 1); 
+             TIM_Config(&htim10, (3 * 1000) - 1); 
            break;
     case 2 : TIM_Reset(&htim10);
-             TIM_Config(&htim7, (3 * 1000) - 1);
+             TIM_Config(&htim7, (1.5 * 1000) - 1);
            break;
   }
 }

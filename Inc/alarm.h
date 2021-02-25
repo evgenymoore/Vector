@@ -21,7 +21,6 @@ typedef struct
 extern alarm Alarm;
 
                                 /* объявления функций */
-uint16_t Alarm_Reset(void);                                                     //сброс тревоги 
 void Alarm_Check(alarm* alarm);                                                 //проверка счетчика тревоги
 void Alarm_Cross(converter* analog, alarm* alarm);                              //сброс флага пересечений                           
 void Alarm_Update(converter* analog, alarm* alarm);                             //увеличение счетчика тревоги

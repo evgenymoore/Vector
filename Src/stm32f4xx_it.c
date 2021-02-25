@@ -276,7 +276,7 @@ void TIM1_UP_TIM10_IRQHandler(void)
     GPIOE->ODR &= ~RELAY_Pin;
     Alarm.state = fault;
   }
-  Alarm.counter = Alarm_Reset();
+  Alarm.counter = 0;
   
   /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
@@ -334,8 +334,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
   
   TIM_Reset(&htim13);
-  Alarm.counter = Alarm_Reset();
   Alarm.state = reset;
+  Alarm.counter = 0;
   
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   HAL_TIM_IRQHandler(&htim13);
@@ -390,19 +390,18 @@ void TIM6_DAC_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
   
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&Analog.buffer, Analog.size);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&Analog.buffer, SIZE);
   Analog_Up(&Analog);
   Analog.buffer[Analog.index] = filtration(&Filter, Analog.buffer[Analog.index], denominator, numerator, gain);
-  //Send_Value(Analog.buffer[Analog.index], uart_buffer);
   
   Average_Summary(&Analog, &Average);
   
   Alarm_Cross(&Analog, &Alarm);
-  if (Analog.index == (FILTER_MODE - 1) || Analog.state != false) {
+  
+  if (Analog.index == (SIZE - 1) || Analog.state) {
     Moving_Average(&Analog, &Average);
-    //Send_Value(Average.value, uart_buffer);
     Replace_Check(&Analog);
-    if (Analog.state != false) {
+    if (Analog.state) {
       Average.factor = Sense(GPIOE);
       Edge_Setting(&Analog, &Average);
     }
@@ -423,7 +422,7 @@ void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM7_IRQn 0 */
   
-  Alarm.counter = Alarm_Reset();
+  Alarm.counter = 0;
   GPIOE->ODR |= RELAY_Pin;  
   TIM_Reset(&htim7);
   
