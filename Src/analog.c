@@ -15,15 +15,13 @@ void Constructor_Analog(converter* analog)
 
 void Analog_Up(converter* analog)
 {
-  analog->dma_value = (uint16_t)(DMA2_Stream0->NDTR);
-  if (analog->dma_value <= (analog->size - 1))
+  if (DMA2_Stream0->NDTR <= (analog->size - 1))
     analog->index++;
 }
 
-void Analog_Reset(converter* analog)
-{
-  if (DMA2->LISR & DMA_LISR_TCIF0)
-    analog->index = 0;
+void Analog_Reset(converter* analog) {
+  if (DMA2->LISR & DMA_LISR_TCIF0) 
+    analog->index = 0; 
 }
 
 void Replace_Check(converter* analog)

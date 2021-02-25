@@ -232,7 +232,7 @@ void ADC_IRQHandler(void)
   if (Alarm.state == reset) {
     Alarm_Update(&Analog, &Alarm);
     Alarm_Check(&Alarm);
-    if (Alarm.state == setup) { 
+    if (Alarm.state == ready) { 
       TIM_Reset(&htim7);
       GPIOE->ODR &= ~RELAY_Pin;    
       TIM_Config(&htim11, (3.6 * 1000) - 1);
@@ -276,7 +276,7 @@ void TIM1_UP_TIM10_IRQHandler(void)
     GPIOE->ODR &= ~RELAY_Pin;
     Alarm.state = fault;
   }
-  Alarm_Reset(&Alarm);
+  Alarm.counter = Alarm_Reset();
   
   /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
@@ -293,7 +293,7 @@ void TIM1_TRG_COM_TIM11_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_TRG_COM_TIM11_IRQn 0 */
   
-  if (Alarm.state == setup || Alarm.state == remote) {
+  if (Alarm.state == ready || Alarm.state == remote) {
     GPIOE->ODR |= RELAY_Pin;
     TIM_Config(&htim13, (2 * 1000) - 1);
     Alarm.state = delay;
@@ -334,7 +334,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
   
   TIM_Reset(&htim13);
-  Alarm_Reset(&Alarm);
+  Alarm.counter = Alarm_Reset();
   Alarm.state = reset;
   
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
@@ -398,17 +398,15 @@ void TIM6_DAC_IRQHandler(void)
   Average_Summary(&Analog, &Average);
   
   Alarm_Cross(&Analog, &Alarm);
-  if (Analog.index >= (FILTER_MODE - 1) || Average.state != false) 
-  {
+  if (Analog.index == (FILTER_MODE - 1) || Analog.state != false) {
     Moving_Average(&Analog, &Average);
     //Send_Value(Average.value, uart_buffer);
     Replace_Check(&Analog);
-    if (Average.state != false) 
-    {
-      Deviation.factor = Sense_Mode(GPIOE);
-      Edge_Setting(&Analog, &Average, Deviation.factor);
+    if (Analog.state != false) {
+      Average.factor = Sense(GPIOE);
+      Edge_Setting(&Analog, &Average);
     }
-    Average.state = true;
+    Analog.state = true;
   }
   
   /* USER CODE END TIM6_DAC_IRQn 0 */
@@ -425,7 +423,7 @@ void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM7_IRQn 0 */
   
-  Alarm_Reset(&Alarm);
+  Alarm.counter = Alarm_Reset();
   GPIOE->ODR |= RELAY_Pin;  
   TIM_Reset(&htim7);
   

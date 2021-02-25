@@ -2,12 +2,12 @@
 
 alarm Alarm;
 
-void Alarm_Reset(alarm* alarm) {
-  alarm->counter = 0;
+uint16_t Alarm_Reset(void) {
+  return 0;
 }
 
 void Alarm_Check(alarm* alarm) {  
-  (alarm->counter == ALARM_MODE) ? (alarm->state = setup) : 
+  (alarm->counter == ALARM_MODE) ? (alarm->state = ready) : 
                                    (alarm->state = reset) ; 
 }
 
