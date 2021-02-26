@@ -401,10 +401,10 @@ void TIM6_DAC_IRQHandler(void)
   if (Analog.index == (SIZE - 1) || Analog.state) {
     Moving_Average(&Analog, &Average);
     Replace_Check(&Analog);
-    if (Analog.state) {
-      Average.factor = Sense(GPIOE);
-      Edge_Setting(&Analog, &Average);
-    }
+    
+    Average.factor = Sense(GPIOE);
+    Edge_Setting(&Analog, &Average);
+
     Analog.state = true;
   }
   

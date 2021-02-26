@@ -19,6 +19,8 @@ void Edge_Setting(converter* analog, average* average)
   (analog->high > LEVEL_HIGH) ? (ADC1->HTR = LEVEL_HIGH) : (ADC1->HTR = analog->high);
   
   analog->low = average->value - average->factor;
-  (analog->low < LEVEL_LOW)  ? (ADC1->LTR = LEVEL_LOW) : (ADC1->LTR = analog->low);
-  (analog->low > LEVEL_HIGH) ? (ADC1->LTR = LEVEL_LOW) : (ADC1->LTR = analog->low);
+  if ((analog->low < LEVEL_LOW) || (analog->low > LEVEL_HIGH))
+    ADC1->LTR = LEVEL_LOW;
+  else 
+    ADC1->LTR = analog->low;
 }
