@@ -7,7 +7,7 @@
 
 #define DURATION                5                                               //длительность преобразований - 5 секунд 
 #define FREQUENCY               2000                                            //частота цифровки - Герцы
-#define MESSAGE                 7
+#define MESSAGE                 9
 #define SIZE                    FREQUENCY * DURATION                            //длина выборки
 #define LEVEL_LOW               1
 #define LEVEL_HIGH              4095
@@ -37,6 +37,6 @@ void Constructor_Analog(converter* analog);                                     
 void Analog_Up(converter* analog);
 
                                /*функции отправки сигнала*/
-void Send_Signal(uint16_t signal, uint16_t high, uint16_t low, uint8_t* uart_buff);     
+void Send_Signal(uint16_t signal, uint16_t high, uint16_t low, uint16_t average, uint8_t* uart_buff);     
 
 #endif /* __ANALOG_H */
