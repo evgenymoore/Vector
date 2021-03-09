@@ -197,24 +197,31 @@ void SysTick_Handler(void)
 void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
-
-  if ((GPIOE->IDR & REMOTE_Pin) && Alarm.state == reset) {
+  
+  if ((GPIOE->IDR & REMOTE_Pin) && Alarm.state == reset) 
+  {
     Alarm.state = remote;
-    TIM_Config(&htim10, (5.002 * 1000) - 1);
+    TIM_Config(&htim10, (5.1 * 1000) - 1);
   }
-  else if (Alarm.state == fault) {
-    GPIOE->ODR |= RELAY_Pin;
-    Alarm.state = reset;
-  }
-  else if ((TIM10->CNT >= (1 * 1000) && TIM10->CNT < (5 * 1000)) && Alarm.state == remote) {
-    TIM_Reset(&htim10);
-    GPIOE->ODR &= ~RELAY_Pin;
-    TIM_Config(&htim11, (3.6 * 1000) - 1);    
-  }
-  else if ((TIM10->CNT < (1 * 1000)) && Alarm.state == remote) {
-    TIM_Reset(&htim10);
-    Alarm.state = reset;
-  }
+  else 
+    switch (Alarm.state)
+    {
+      case fault  : GPIOE->ODR |= RELAY_Pin;
+                    Alarm.state = ready;
+                    TIM_Config(&htim13, (2 * 1000) - 1);
+                break;
+      case remote : TIM_Reset(&htim10);
+                    if (TIM10->CNT >= (1 * 1000) && TIM10->CNT <= (5 * 1000)) 
+                    {
+                      GPIOE->ODR &= ~RELAY_Pin;
+                      Alarm.state = ready;
+                      TIM_Config(&htim11, (3.6 * 1000) - 1);
+                    }
+                    else if (TIM10->CNT < (1 * 1000))
+                      Alarm.state = reset;
+                break;
+    }
+  
   /* USER CODE END EXTI4_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
@@ -229,10 +236,12 @@ void ADC_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC_IRQn 0 */
   
-  if (Alarm.state == reset) {
+  if (Alarm.state == reset) 
+  {
     Alarm_Update(&Analog, &Alarm);
     Alarm_Check(&Alarm);
-    if (Alarm.state == ready) { 
+    if (Alarm.state == ready) 
+    { 
       TIM_Reset(&htim7);
       GPIOE->ODR &= ~RELAY_Pin;    
       TIM_Config(&htim11, (3.6 * 1000) - 1);
@@ -272,7 +281,8 @@ void TIM1_UP_TIM10_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
   
-  if ((GPIOE->IDR & REMOTE_Pin) && Alarm.state == remote) {
+  if ((GPIOE->IDR & REMOTE_Pin) && (Alarm.state == remote)) {
+    TIM_Reset(&htim10);
     GPIOE->ODR &= ~RELAY_Pin;
     Alarm.state = fault;
   }
@@ -293,10 +303,11 @@ void TIM1_TRG_COM_TIM11_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_TRG_COM_TIM11_IRQn 0 */
   
-  if (Alarm.state == ready || Alarm.state == remote) {
+  if (Alarm.state == ready) {
+    TIM_Reset(&htim11);
     GPIOE->ODR |= RELAY_Pin;
-    TIM_Config(&htim13, (2 * 1000) - 1);
     Alarm.state = delay;
+    TIM_Config(&htim13, (2 * 1000) - 1);
   }
 
   /* USER CODE END TIM1_TRG_COM_TIM11_IRQn 0 */
