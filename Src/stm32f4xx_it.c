@@ -1,36 +1,5 @@
 /* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file    stm32f4xx_it.c
-  * @brief   Interrupt Service Routines.
-  ******************************************************************************
-  *
-  * COPYRIGHT(c) 2020 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
+
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -228,22 +197,30 @@ void SysTick_Handler(void)
 void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
-
-  if ((GPIOE->IDR & REMOTE_Pin) && !Alarm.delay)
-    TIM_Config(&htim10, (5.05 * 1000) - 1);
-  else {
-    TIM_Reset(&htim10);
-    if ((TIM10->CNT >= (1 * 1000)) && (TIM10->CNT < (5 * 1000))) {
-      Alarm.remote = true; 
-      Alarm.fault = false;
-      GPIOE->ODR &= ~RELAY_Pin;
-      TIM_Config(&htim11, (3.6 * 1000) - 1);
+ 
+  if ((GPIOE->IDR & REMOTE_Pin) && (Alarm.state == reset)) 
+  {
+    Alarm.state = remote;
+    TIM_Config(&htim10, (5.1 * 1000) - 1);
+  }
+  else 
+    switch (Alarm.state)
+    {
+      case fault  : GPIOE->ODR |= RELAY_Pin;
+                    Alarm.state = ready;
+                    TIM_Config(&htim13, (2 * 1000) - 1);
+                break;
+      case remote : TIM_Reset(&htim10);
+                    if (TIM10->CNT >= (1 * 1000) && TIM10->CNT <= (5 * 1000)) 
+                    {
+                      GPIOE->ODR &= ~RELAY_Pin;
+                      Alarm.state = ready;
+                      TIM_Config(&htim11, (3.6 * 1000) - 1);
+                    }
+                    else if (TIM10->CNT < (1 * 1000))
+                      Alarm.state = reset;
+                break;
     }
-    else {
-      Alarm_Reset(&Alarm);
-      GPIOE->ODR |= RELAY_Pin;
-    }
-  }  
   
   /* USER CODE END EXTI4_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
@@ -259,16 +236,18 @@ void ADC_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC_IRQn 0 */
   
-  if (!Alarm.reset)
+  if (Alarm.state == reset) 
   {
     Alarm_Update(&Analog, &Alarm);
-    Alarm.reset = Alarm_Check(Alarm.counter);
-    if (Alarm.reset && !Alarm.fault && !Alarm.delay) { 
+    Alarm_Check(&Alarm);
+    if (Alarm.state == ready) 
+    { 
       TIM_Reset(&htim7);
       GPIOE->ODR &= ~RELAY_Pin;    
       TIM_Config(&htim11, (3.6 * 1000) - 1);
     }  
   }
+  
   /* USER CODE END ADC_IRQn 0 */
   HAL_ADC_IRQHandler(&hadc1);
   /* USER CODE BEGIN ADC_IRQn 1 */
@@ -302,20 +281,12 @@ void TIM1_UP_TIM10_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
   
-  TIM_Reset(&htim10);
-  if (Alarm.remote) {
+  if ((GPIOE->IDR & REMOTE_Pin) && (Alarm.state == remote)) {
+    TIM_Reset(&htim10);
     GPIOE->ODR &= ~RELAY_Pin;
-    TIM_Config(&htim11, (3.6 * 1000) - 1);
+    Alarm.state = fault;
   }
-  else {
-    Alarm_Reset(&Alarm);
-    if (GPIOE->IDR & REMOTE_Pin) {
-      TIM10->CNT = 0;
-      GPIOE->ODR &= ~RELAY_Pin;
-      Alarm.fault = true;
-      Alarm.reset = true;
-    }
-  }  
+  Alarm.counter = 0;
   
   /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
@@ -332,10 +303,12 @@ void TIM1_TRG_COM_TIM11_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_TRG_COM_TIM11_IRQn 0 */
   
-  Alarm_Reset(&Alarm);
-  GPIOE->ODR |= RELAY_Pin;
-  Alarm.delay = true;
-  TIM_Config(&htim13, (2 * 1000) - 1);
+  if (Alarm.state == ready) {
+    TIM_Reset(&htim11);
+    GPIOE->ODR |= RELAY_Pin;
+    Alarm.state = delay;
+    TIM_Config(&htim13, (2 * 1000) - 1);
+  }
 
   /* USER CODE END TIM1_TRG_COM_TIM11_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
@@ -372,7 +345,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
   /* USER CODE BEGIN TIM8_UP_TIM13_IRQn 0 */
   
   TIM_Reset(&htim13);
-  Alarm.delay = false;
+  Alarm.state = reset;
+  Alarm.counter = 0;
   
   /* USER CODE END TIM8_UP_TIM13_IRQn 0 */
   HAL_TIM_IRQHandler(&htim13);
@@ -427,25 +401,22 @@ void TIM6_DAC_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
   
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&Analog.buffer, Analog.size);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&Analog.buffer, SIZE);
   Analog_Up(&Analog);
   Analog.buffer[Analog.index] = filtration(&Filter, Analog.buffer[Analog.index], denominator, numerator, gain);
-  //Send_Value(Analog.buffer[Analog.index], uart_buffer);
   
   Average_Summary(&Analog, &Average);
   
   Alarm_Cross(&Analog, &Alarm);
-  if (Analog.index >= (FILTER_MODE - 1) || Average.state != false) 
-  {
+  
+  if (Analog.index == (SIZE - 1) || Analog.state) {
     Moving_Average(&Analog, &Average);
-    //Send_Value(Average.value, uart_buffer);
     Replace_Check(&Analog);
-    if (Average.state != false) 
-    {
-      Deviation.factor = Sense_Mode(GPIOE);
-      Edge_Setting(&Analog, &Average, Deviation.factor);
-    }
-    Average.state = true;
+    
+    Average.factor = Sense(GPIOE);
+    Edge_Setting(&Analog, &Average);
+
+    Analog.state = true;
   }
   
   /* USER CODE END TIM6_DAC_IRQn 0 */
@@ -462,7 +433,7 @@ void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM7_IRQn 0 */
   
-  Alarm_Reset(&Alarm);
+  Alarm.counter = 0;
   GPIOE->ODR |= RELAY_Pin;  
   TIM_Reset(&htim7);
   

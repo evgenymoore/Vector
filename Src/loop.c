@@ -1,5 +1,7 @@
 #include "loop.h"
 
+//uint16_t high, low;
+
 int loop(void)
 {
   Constructor_Analog(&Analog);
@@ -18,12 +20,15 @@ int loop(void)
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
   
          /* set the distance */  
-  DISTANCE = Distance_Mode(GPIOE);
+  DISTANCE = Distance(GPIOE);
 
          /* Super-master TIM */
   HAL_TIM_Base_Start_IT(&htim5);
   
   while(1) {
-    DISTANCE = Distance_Mode(GPIOE);
+    //high = ADC1->HTR;
+    //low = ADC1->LTR;
+    //Send_Signal(Analog.buffer[Analog.index], high, low, Average.value, uart_buffer);
+    DISTANCE = Distance(GPIOE);
   }
 }
