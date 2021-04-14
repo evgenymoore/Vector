@@ -197,7 +197,7 @@ void SysTick_Handler(void)
 void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
-  
+ 
   if ((GPIOE->IDR & REMOTE_Pin) && (Alarm.state == reset)) 
   {
     Alarm.state = remote;
